@@ -16,6 +16,8 @@ Student number: 402411229
 * Open the Suggested Recipes screen to see only the meals you can make
 * Tap a recipe to see the full ingredient list and the method
 * Change your preferences on the Settings screen
+* See an "Almost there" list of recipes that are still missing one ingredient,
+  kept separate from the real suggestions
 * 18 recipes are loaded into the database the first time the app is opened
 
 ## Screens
@@ -33,6 +35,11 @@ Student number: 402411229
 A recipe is only shown when **every** ingredient it needs is already in the
 pantry. If a recipe needs 5 things and only 4 of them are in the pantry, that
 recipe is left out completely, it is not shown as "almost there".
+
+Under the suggestions there is a separate "Almost there" list. Those recipes
+cannot be cooked yet, each one is missing exactly one ingredient and the app
+says which one. It is kept below a divider so it is never mixed up with the
+recipes that can actually be made.
 
 The comparing is done in `RecipeMatcher.java`. Before two names are compared
 they are put in lower case and the plural is taken off, so "Tomatoes" in the
