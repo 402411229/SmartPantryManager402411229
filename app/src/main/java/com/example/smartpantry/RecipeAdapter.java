@@ -16,10 +16,20 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeHold
 
     private ArrayList<Recipe> recipes;
     private Context context;
+    private ArrayList<PantryItem> pantry;
+    private boolean almostThere = false;
 
     public RecipeAdapter(Context context, ArrayList<Recipe> recipes) {
         this.context = context;
         this.recipes = recipes;
+    }
+
+    // used by the almost there list so the row can say what is still needed
+    public RecipeAdapter(Context context, ArrayList<Recipe> recipes, ArrayList<PantryItem> pantry) {
+        this.context = context;
+        this.recipes = recipes;
+        this.pantry = pantry;
+        this.almostThere = true;
     }
 
     @NonNull
@@ -33,7 +43,11 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeHold
     public void onBindViewHolder(@NonNull RecipeHolder holder, int position) {
         final Recipe recipe = recipes.get(position);
         holder.name.setText(recipe.getName());
-        holder.info.setText(recipe.getIngredients().size() + " ingredients you already have");
+        if (almostThere) {
+            holder.info.setText("You still need " + RecipeMatcher.getMissingName(recipe, pantry));
+        } else {
+            holder.info.setText(recipe.getIngredients().size() + " ingredients you already have");
+        }
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
