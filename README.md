@@ -1,113 +1,82 @@
 # Smart Pantry Manager
 
-A Java Android app that helps reduce food waste. The user keeps track of the ingredients they have at home (their **pantry**), and the app suggests recipes they can cook **using only those ingredients**.
+An Android app written in Java that keeps track of the ingredients you already
+have at home and then shows you only the recipes you can cook right now with
+those ingredients. The idea is to cut food waste, so the app never suggests a
+meal that needs a trip to the shop first.
 
-A recipe is only suggested if **every** ingredient it needs is in the pantry **in at least the required quantity**. If even one ingredient is missing, the recipe is not suggested.
+Module: Mobile App Development 700
+Student number: 402411229
 
-## Features
+## What the app does
 
-- **Pantry management (full CRUD):** add, view, edit and delete ingredients (name, quantity, unit and optional expiry date)
-- **Suggested Recipes:** strict matching against 20 recipes that are seeded into the database on first run
-- **Smart matching:** handles upper/lower case, plurals ("tomatoes" = "tomato"), common alternative names ("scallion" = "spring onion") and unit conversion (kg to g, l to ml, cups/tbsp/tsp to ml)
-- **Recipe detail:** full ingredient list with a tick or cross for each item, plus the method
-- **"I cooked this" button:** subtracts the used ingredients from the pantry
-- **Expiry alerts:** items that are expired or about to expire are highlighted
-- **Almost There (bonus):** a separate list of recipes missing exactly one ingredient
-- **Settings:** expiry alerts on/off, number of warning days, Almost There on/off, default unit
-- Input validation on the add/edit form
-- Friendly message when no recipes match
-- No maps, no GPS, no internet permission: the app works fully offline
+* Add, edit and delete the ingredients in your pantry (name, quantity, unit and
+  an optional expiry date)
+* See the whole pantry in a list
+* Open the Suggested Recipes screen to see only the meals you can make
+* Tap a recipe to see the full ingredient list and the method
+* Change your preferences on the Settings screen
+* 18 recipes are loaded into the database the first time the app is opened
 
 ## Screens
 
-| Screen | Activity |
+| Screen | What it is for |
 |---|---|
-| Pantry List (launcher) | `MainActivity` |
-| Add / Edit Ingredient | `AddEditIngredientActivity` |
-| Suggested Recipes | `SuggestedRecipesActivity` |
-| Recipe Detail | `RecipeDetailActivity` |
-| Settings | `SettingsActivity` |
+| MainActivity | the pantry list, with a button to add a new item |
+| AddEditItemActivity | the form used to add a new item or edit an old one |
+| SuggestedRecipesActivity | the recipes that match the pantry |
+| RecipeDetailActivity | ingredients and method for one recipe |
+| SettingsActivity | expiry warning and preferred unit |
 
-Navigation uses a bottom navigation bar (Pantry, Recipes, Settings) and explicit Intents. Item and recipe ids are passed between screens as Intent extras.
+## The matching rule
 
-```mermaid
-flowchart LR
-    A[Pantry List] -->|+ button| B[Add Ingredient]
-    A -->|tap item| C[Edit Ingredient]
-    A <-->|bottom nav| D[Suggested Recipes]
-    D -->|tap recipe| E[Recipe Detail]
-    D <-->|bottom nav| F[Settings]
-    A <-->|bottom nav| F
-```
+A recipe is only shown when **every** ingredient it needs is already in the
+pantry. If a recipe needs 5 things and only 4 of them are in the pantry, that
+recipe is left out completely, it is not shown as "almost there".
 
-## Database choice: SQLite (SQLiteOpenHelper)
+The comparing is done in `RecipeMatcher.java`. Before two names are compared
+they are put in lower case and the plural is taken off, so "Tomatoes" in the
+pantry still matches "tomato" in a recipe. Units are also cleaned up so that
+"tablespoon" and "tbsp" count as the same unit. When the units are the same the
+app also checks that there is enough of the ingredient, not just that it is
+there.
 
-I chose **SQLite** because:
+## Database
 
-1. It is built into Android, so no extra setup, accounts or internet connection are needed.
-2. A pantry is personal data on one device, so cloud sync is not needed.
-3. It works offline, which suits a kitchen app.
-4. It is the approach covered in the module's persistent data chapter.
+The app uses **SQLite** through `SQLiteOpenHelper`.
 
-```mermaid
-erDiagram
-    RECIPES ||--|{ RECIPE_INGREDIENTS : "needs"
-    PANTRY_ITEMS {
-        INTEGER id PK
-        TEXT name
-        REAL quantity
-        TEXT unit
-        TEXT expiry_date
-    }
-    RECIPES {
-        INTEGER id PK
-        TEXT name
-        TEXT steps
-    }
-    RECIPE_INGREDIENTS {
-        INTEGER id PK
-        INTEGER recipe_id FK
-        TEXT name
-        REAL quantity
-        TEXT unit
-    }
-```
+I chose SQLite because:
 
-Settings are stored separately with `SharedPreferences`.
+* the app is only used by one person on one phone, so there is no need to share
+  the data over the internet
+* it works with no internet connection at all
+* it does not need an account or a server to be set up, which keeps the app
+  simple and free to run
+* it is the way persistent storage is taught in the module
 
-## Project structure
+There are three tables:
 
-```
-app/src/main/java/com/example/smartpantry/
-├── MainActivity.java                 Pantry list
-├── AddEditIngredientActivity.java    Add / edit form with validation
-├── SuggestedRecipesActivity.java     Strict suggestions + Almost There
-├── RecipeDetailActivity.java         Ingredients, method, "I cooked this"
-├── SettingsActivity.java             User settings
-├── NavHelper.java                    Bottom navigation
-├── adapter/   PantryAdapter, RecipeAdapter   (custom RecyclerView adapters)
-├── database/  DatabaseHelper                 (SQLite CRUD + seed recipes)
-├── logic/     RecipeMatcher, IngredientUtils (strict-matching rule)
-├── model/     PantryItem, Recipe, RecipeIngredient
-└── util/      AppSettings, DateUtils
-```
+* `pantry` - the ingredients the user has (id, name, quantity, unit, expiry)
+* `recipes` - the recipe name and the method
+* `recipe_ingredients` - the ingredients each recipe needs, linked to `recipes`
+  by `recipe_id`
 
-## Setup and run
+All four CRUD operations are used: adding an item, reading the list, updating an
+item and deleting an item. The data stays on the phone after the app is closed
+because it is written into the database and not kept in memory.
 
-1. Install **Android Studio** (Koala or newer) with JDK 17 (bundled with Android Studio).
-2. Clone the repository:
-   ```
-   git clone https://github.com/<your-username>/SmartPantryManager.git
-   ```
-3. In Android Studio choose **File > Open** and select the `SmartPantryManager` folder.
-4. Wait for Gradle sync to finish.
-5. Start an emulator (API 24 or higher) or connect a phone with USB debugging on.
-6. Press **Run** (green play button).
+## How to run it
 
-To run the unit tests for the matching logic: right-click `app/src/test/.../RecipeMatcherTest.java` and choose **Run**.
+1. Open the project folder in Android Studio.
+2. Let Gradle finish syncing.
+3. Start an emulator (Pixel 3a, API 34 was used) or plug in a phone with USB
+   debugging switched on.
+4. Press Run.
 
-## Quick demo of the strict rule
+Minimum SDK is 24 and the project was built with compile SDK 34.
 
-1. Add: Eggs 6 pcs, Milk 1 l, Butter 250 g.
-2. Open **Recipes**: *Scrambled Eggs* appears.
-3. Edit Eggs to 2 pcs (recipe needs 3): *Scrambled Eggs* disappears.
+## Screenshots
+
+The `screenshots` folder has pictures of every screen, including the validation
+error, the delete confirmation and the suggestions list before and after a new
+ingredient is added.
