@@ -74,6 +74,39 @@ public class RecipeMatcher {
         return true;
     }
 
+    // how many of the ingredients are not in the pantry
+    public static int countMissing(Recipe recipe, ArrayList<PantryItem> pantry) {
+        int missing = 0;
+        for (Ingredient needed : recipe.getIngredients()) {
+            if (!hasEnough(pantry, needed)) {
+                missing = missing + 1;
+            }
+        }
+        return missing;
+    }
+
+    // the name of the one ingredient that is still needed
+    public static String getMissingName(Recipe recipe, ArrayList<PantryItem> pantry) {
+        for (Ingredient needed : recipe.getIngredients()) {
+            if (!hasEnough(pantry, needed)) {
+                return needed.getName();
+            }
+        }
+        return "";
+    }
+
+    // recipes that need only one more ingredient, these are kept separate from
+    // the real suggestions because the user cannot cook them yet
+    public static ArrayList<Recipe> getAlmostThere(ArrayList<Recipe> recipes, ArrayList<PantryItem> pantry) {
+        ArrayList<Recipe> almost = new ArrayList<>();
+        for (Recipe r : recipes) {
+            if (countMissing(r, pantry) == 1) {
+                almost.add(r);
+            }
+        }
+        return almost;
+    }
+
     public static ArrayList<Recipe> getSuggestions(ArrayList<Recipe> recipes, ArrayList<PantryItem> pantry) {
         ArrayList<Recipe> suggestions = new ArrayList<>();
         for (Recipe r : recipes) {
